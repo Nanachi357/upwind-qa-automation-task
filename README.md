@@ -2,7 +2,7 @@
 
 Practical assignment for the QA Automation Engineer position at Upwind.
 
-## Current coverage
+## Coverage
 
 Three scenarios are implemented:
 
@@ -17,11 +17,29 @@ Three scenarios are implemented:
 ## Stack
 
 - Java 21
-- Gradle Wrapper
+- Gradle 9.1.0 through the Gradle Wrapper
 - JUnit 5
 - Selenide
 - REST Assured
 - Jackson for JSON request serialization
+
+## Code structure
+
+All Java code is under `src/test/java/com/ponomarenko/qa`:
+
+```text
+config/       Shared configuration loader
+ui/           Login and product/cart scenarios, browser setup and cleanup
+  pages/      Page objects with locators, actions and UI assertions
+  model/      Selected product name and price
+api/          Booking creation and retrieval scenario
+  client/     Request configuration and booking endpoints
+  model/      Booking and booking-date records
+```
+
+Defaults are in `src/test/resources/test.properties`. Gradle tasks and
+dependencies are defined in `build.gradle`. `Dockerfile` and
+`docker/google-chrome` configure container execution.
 
 ## Prerequisites for local execution
 
@@ -34,13 +52,6 @@ Chrome for Testing **155.0.8059.84** and its matching ChromeDriver automatically
 This browser version matches the CDP support bundled with the current Selenium
 dependency. A separately installed Chrome is not required for the default setup.
 The first run takes longer because of these downloads.
-
-On the first Windows browser download, Selenium Manager 4.51.0 can log
-`Unable to configure the Chrome sandbox: setup.exe exited with exit code: 78`.
-This is a false warning: the [Chrome installer defines code 78 as successful
-sandbox configuration](https://github.com/chromium/chromium/blob/155.0.8059.84/chrome/installer/util/util_constants.h),
-while [Selenium Manager checks for a zero exit code](https://github.com/SeleniumHQ/selenium/blob/selenium-4.51.0/rust/src/chrome.rs).
-Both UI tests passed in a clean setup that emitted this warning.
 
 Verified locally on Windows x64 and in the supplied Docker image on Linux amd64.
 For a local Linux setup, Chrome also requires its usual system libraries.
@@ -87,8 +98,8 @@ docker run --rm qa-automation-tests
 ```
 
 The default command runs all four test cases with headless Chrome. Building the
-image compiles the tests without executing them. Internet access is required
-during the build and when testing the public services.
+image compiles the tests without executing them. Internet access to dependency
+repositories and the public test services is required for setup and execution.
 Keep `ui.headless=true` in this image, which has no display server.
 
 The same image can run individual suites and accept configuration overrides:
@@ -100,7 +111,7 @@ docker run --rm qa-automation-tests uiTest "-Dui.timeoutMs=15000"
 ```
 
 To keep reports after the container is removed, mount the local `build` directory.
-For PowerShell, run from the project root:
+For PowerShell on Windows, run from the project root:
 
 ```powershell
 New-Item -ItemType Directory -Force build | Out-Null
@@ -160,8 +171,9 @@ reading a response.
 
 ## Test approach
 
-- Page objects keep the dedicated `data-test` locators and page operations
-  separate from the test scenario.
+- Page objects keep locators, page operations and UI assertions separate from
+  the scenarios. Dedicated `data-test` attributes identify controls without
+  coupling the tests to visual styling or element positions.
 - Selenide conditions wait for the expected URL, visible elements, heading text
   and a non-empty product collection. There are no fixed sleeps.
 - The sorting test reads the initial prices as `BigDecimal`, sorts that snapshot
@@ -196,8 +208,15 @@ reading a response.
 - SLF4J Simple provides Selenide logs, captured in the Gradle test reports.
   WebDriver BiDi is enabled for Selenide's browser-log collection.
 
-The tests exercise public SauceDemo and Restful Booker services and depend on
-their availability. The API test creates data in the shared demo service.
+## Assumptions and limitations
+
+- The tests exercise public SauceDemo and Restful Booker services and depend on
+  their availability and current behavior.
+- Sorting assumes SauceDemo's USD price format and at least two different
+  product prices. Each UI scenario starts with a fresh browser session.
+- The API uses synthetic data and leaves the created bookings in the shared
+  demo service. Each case retrieves only the booking it created.
+- The supplied Docker image targets Linux amd64 and runs Chrome headlessly.
 
 ## Reports
 
@@ -207,3 +226,16 @@ their availability. The API test creates data in the shared demo service.
 - JUnit XML results: `build/test-results/<task-name>/`.
 - Screenshots and page sources from failed UI tests:
   `build/reports/selenide/`.
+
+## Troubleshooting
+
+On the first Windows browser download, Selenium Manager 4.51.0 can log
+`Unable to configure the Chrome sandbox: setup.exe exited with exit code: 78`.
+This is a false warning: the [Chrome installer defines code 78 as successful
+sandbox configuration](https://github.com/chromium/chromium/blob/155.0.8059.84/chrome/installer/util/util_constants.h),
+while [Selenium Manager checks for a zero exit code](https://github.com/SeleniumHQ/selenium/blob/selenium-4.51.0/rust/src/chrome.rs).
+Both UI tests passed in a clean setup that emitted this warning.
+
+Gradle reports `compileJava NO-SOURCE` and `processResources NO-SOURCE` because
+this project contains only test code and test resources. The selected test task
+still executes and reports the individual test results.
