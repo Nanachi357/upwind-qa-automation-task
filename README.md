@@ -4,9 +4,12 @@ Practical assignment for the QA Automation Engineer position at Upwind.
 
 ## Current coverage
 
-One SauceDemo UI test logs in with the provided credentials, checks the Products
-page URL and heading, and verifies that the page contains a visible product
-with a non-empty name.
+Two SauceDemo UI tests are implemented:
+
+1. Log in with the provided credentials, check the Products page URL and heading,
+   and verify that the page contains a visible product with a non-empty name.
+2. Log in independently, sort all products by price from low to high, add a
+   product to the cart, and verify its name and price in the cart.
 
 ## Stack
 
@@ -30,6 +33,13 @@ This browser version matches the CDP support bundled with the current Selenium
 dependency. A separately installed Chrome is not required for the default setup.
 The first run takes longer because of these downloads.
 
+On the first Windows browser download, Selenium Manager 4.51.0 can log
+`Unable to configure the Chrome sandbox: setup.exe exited with exit code: 78`.
+This is a false warning: the [Chrome installer defines code 78 as successful
+sandbox configuration](https://github.com/chromium/chromium/blob/155.0.8059.84/chrome/installer/util/util_constants.h),
+while [Selenium Manager checks for a zero exit code](https://github.com/SeleniumHQ/selenium/blob/selenium-4.51.0/rust/src/chrome.rs).
+Both tests passed in a clean setup that emitted this warning.
+
 Verified locally on Windows x64. On Linux, Chrome also requires its usual system
 libraries to be installed.
 
@@ -43,6 +53,9 @@ Run these PowerShell commands from the project root:
 
 # Run only the login test
 .\gradlew.bat uiTest --tests com.ponomarenko.qa.ui.LoginTest
+
+# Run only the sorting and cart test
+.\gradlew.bat uiTest --tests com.ponomarenko.qa.ui.ProductAndCartTest
 
 # Run all implemented tests
 .\gradlew.bat test
@@ -92,6 +105,12 @@ Changing the browser version requires checking its compatibility with Selenium.
   separate from the test scenario.
 - Selenide conditions wait for the expected URL, visible elements, heading text
   and a non-empty product collection. There are no fixed sleeps.
+- The sorting test reads the initial prices as `BigDecimal`, sorts that snapshot
+  numerically and checks the full displayed price sequence, including duplicate
+  prices and the number of products. It requires at least two different prices
+  so that the ordering check is meaningful. Prices use the site's USD format.
+- Product details are captured before adding the item. The cart must contain
+  exactly that one product with the same name and price.
 - `BaseUiTest` applies browser configuration before each test and closes the
   browser afterward, including failed tests. Each test gets a fresh session.
 - Tests currently run sequentially.
