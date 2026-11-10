@@ -125,9 +125,13 @@ reading a response.
   prices and the number of products. It requires at least two different prices
   so that the ordering check is meaningful. Prices use the site's USD format.
 - Product details are captured before adding the item. The cart must contain
-  exactly that one product with the same name and price.
+  exactly that one product with the same case-sensitive name and price. The
+  price element must be visible and non-empty before its value is read.
 - `BaseUiTest` applies browser configuration before each test and closes the
   browser afterward, including failed tests. Each test gets a fresh session.
+- When a browser is available, Selenide's JUnit extension captures a screenshot
+  and page source before cleanup if a UI test fails, including ordinary JUnit
+  assertion failures.
 - The API test creates a fresh synthetic booking on each run, with a unique
   name and future dates calculated once in UTC. It uses only its own returned ID.
   Both deposit flag values are exercised to detect an API that always returns
@@ -141,6 +145,9 @@ reading a response.
   timeouts. REST Assured logs the request and response when a validation fails.
   `Accept` is sent as exactly `application/json`, since Booker rejects the
   multi-value header produced by REST Assured's `ContentType.JSON` overload.
+- API assertion messages identify POST or GET and include the generated name or
+  booking ID. GET field validations are grouped so one failure reports all
+  mismatched fields together.
 - Tests currently run sequentially.
 - SLF4J Simple provides Selenide logs, captured in the Gradle test reports.
   WebDriver BiDi is enabled for Selenide's browser-log collection.
@@ -154,5 +161,5 @@ their availability. The API test creates data in the shared demo service.
 - API HTML report: `build/reports/tests/apiTest/index.html`.
 - All-tests HTML report: `build/reports/tests/test/index.html`.
 - JUnit XML results: `build/test-results/<task-name>/`.
-- Screenshots and page sources from failed Selenide checks:
-  `build/reports/tests/`.
+- Screenshots and page sources from failed UI tests:
+  `build/reports/selenide/`.

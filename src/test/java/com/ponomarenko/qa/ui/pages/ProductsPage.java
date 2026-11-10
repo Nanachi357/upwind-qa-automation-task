@@ -13,8 +13,8 @@ import static com.codeborne.selenide.CollectionCondition.exactTexts;
 import static com.codeborne.selenide.CollectionCondition.sizeGreaterThan;
 import static com.codeborne.selenide.Condition.empty;
 import static com.codeborne.selenide.Condition.exactText;
-import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Condition.value;
+import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.webdriver;
 import static com.codeborne.selenide.WebDriverConditions.url;
@@ -68,7 +68,9 @@ public class ProductsPage {
         SelenideElement product = products.first().shouldBe(visible);
         String name = product.$("[data-test='inventory-item-name']")
                 .shouldBe(visible).shouldNotBe(empty).text();
-        BigDecimal price = parsePrice(product.$("[data-test='inventory-item-price']").text());
+        String priceText = product.$("[data-test='inventory-item-price']")
+                .shouldBe(visible).shouldNotBe(empty).text();
+        BigDecimal price = parsePrice(priceText);
         Product selectedProduct = new Product(name, price);
 
         product.$("[data-test^='add-to-cart-']").click();

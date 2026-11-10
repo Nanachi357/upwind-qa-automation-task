@@ -34,6 +34,7 @@ class BookingApiTest {
 
         int bookingId = client.createBooking(booking)
                 .then()
+                .onFailMessage("POST /booking should create a booking for " + booking.firstName())
                 .statusCode(200)
                 .contentType(JSON)
                 .body("bookingid", greaterThan(0))
@@ -41,14 +42,17 @@ class BookingApiTest {
 
         client.getBooking(bookingId)
                 .then()
+                .onFailMessage("GET /booking/" + bookingId + " should match the submitted booking")
                 .statusCode(200)
                 .contentType(JSON)
-                .body("firstname", equalTo(booking.firstName()))
-                .body("lastname", equalTo(booking.lastName()))
-                .body("totalprice", equalTo(booking.totalPrice()))
-                .body("depositpaid", equalTo(booking.depositPaid()))
-                .body("bookingdates.checkin", equalTo(dates.checkIn()))
-                .body("bookingdates.checkout", equalTo(dates.checkOut()))
-                .body("additionalneeds", equalTo(booking.additionalNeeds()));
+                .body(
+                        "firstname", equalTo(booking.firstName()),
+                        "lastname", equalTo(booking.lastName()),
+                        "totalprice", equalTo(booking.totalPrice()),
+                        "depositpaid", equalTo(booking.depositPaid()),
+                        "bookingdates.checkin", equalTo(dates.checkIn()),
+                        "bookingdates.checkout", equalTo(dates.checkOut()),
+                        "additionalneeds", equalTo(booking.additionalNeeds())
+                );
     }
 }

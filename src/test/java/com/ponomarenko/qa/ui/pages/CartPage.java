@@ -9,6 +9,7 @@ import java.net.URI;
 
 import static com.codeborne.selenide.CollectionCondition.size;
 import static com.codeborne.selenide.Condition.exactText;
+import static com.codeborne.selenide.Condition.exactTextCaseSensitive;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.webdriver;
@@ -30,7 +31,7 @@ public class CartPage {
     public CartPage shouldContainOnlyProduct(Product expectedProduct) {
         SelenideElement product = products.shouldHave(size(1)).first().shouldBe(visible);
         product.$("[data-test='inventory-item-name']")
-                .shouldBe(visible).shouldHave(exactText(expectedProduct.name()));
+                .shouldBe(visible).shouldHave(exactTextCaseSensitive(expectedProduct.name()));
         product.$("[data-test='inventory-item-price']")
                 .shouldBe(visible).shouldHave(exactText("$" + expectedProduct.price().toPlainString()));
         return this;

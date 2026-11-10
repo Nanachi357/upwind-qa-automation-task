@@ -1,13 +1,16 @@
 package com.ponomarenko.qa.ui;
 
 import com.codeborne.selenide.Configuration;
+import com.codeborne.selenide.junit5.ScreenShooterExtension;
 import com.ponomarenko.qa.config.TestConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.MutableCapabilities;
 
 import static com.codeborne.selenide.Selenide.closeWebDriver;
 
+@ExtendWith(ScreenShooterExtension.class)
 abstract class BaseUiTest {
     @BeforeEach
     void configureBrowser() {
@@ -17,6 +20,7 @@ abstract class BaseUiTest {
         Configuration.headless = TestConfig.getBoolean("ui.headless");
         Configuration.browserSize = TestConfig.get("ui.browserSize");
         Configuration.timeout = TestConfig.getPositiveLong("ui.timeoutMs");
+        Configuration.reportsFolder = "build/reports/selenide";
         // Selenide uses WebDriver BiDi when collecting browser logs.
         Configuration.browserCapabilities = new MutableCapabilities();
         Configuration.browserCapabilities.setCapability("webSocketUrl", true);
