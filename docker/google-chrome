@@ -1,0 +1,3 @@
+#!/bin/sh
+# The container supplies isolation. Use /tmp instead of Docker's small /dev/shm.
+exec /opt/chrome-linux64/chrome --no-sandbox --disable-dev-shm-usage "$@"

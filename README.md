@@ -23,7 +23,7 @@ Three scenarios are implemented:
 - REST Assured
 - Jackson for JSON request serialization
 
-## Prerequisites
+## Prerequisites for local execution
 
 - JDK 21, available through `JAVA_HOME` or `PATH`.
 - Internet access to Maven Central, Gradle distributions, Chrome for Testing
@@ -42,8 +42,8 @@ sandbox configuration](https://github.com/chromium/chromium/blob/155.0.8059.84/c
 while [Selenium Manager checks for a zero exit code](https://github.com/SeleniumHQ/selenium/blob/selenium-4.51.0/rust/src/chrome.rs).
 Both UI tests passed in a clean setup that emitted this warning.
 
-Verified locally on Windows x64. On Linux, Chrome also requires its usual system
-libraries to be installed.
+Verified locally on Windows x64 and in the supplied Docker image on Linux amd64.
+For a local Linux setup, Chrome also requires its usual system libraries.
 
 ## Run the tests
 
@@ -72,6 +72,50 @@ Run these PowerShell commands from the project root:
 On macOS or Linux, use `./gradlew` instead of `.\gradlew.bat`.
 Test tasks execute on every invocation, since the external application can change
 without any changes to the project files.
+
+## Run with Docker
+
+Docker must be running Linux containers. The image targets `linux/amd64` and
+includes Java 21, the Gradle Wrapper, Chrome for Testing **155.0.8059.84** and its
+matching ChromeDriver. No local Java, Gradle or browser installation is needed.
+
+From the project root:
+
+```powershell
+docker build -t qa-automation-tests .
+docker run --rm qa-automation-tests
+```
+
+The default command runs all four test cases with headless Chrome. Building the
+image compiles the tests without executing them. Internet access is required
+during the build and when testing the public services.
+Keep `ui.headless=true` in this image, which has no display server.
+
+The same image can run individual suites and accept configuration overrides:
+
+```powershell
+docker run --rm qa-automation-tests uiTest
+docker run --rm qa-automation-tests apiTest
+docker run --rm qa-automation-tests uiTest "-Dui.timeoutMs=15000"
+```
+
+To keep reports after the container is removed, mount the local `build` directory.
+For PowerShell, run from the project root:
+
+```powershell
+New-Item -ItemType Directory -Force build | Out-Null
+docker run --rm --mount "type=bind,source=$($PWD.Path)\build,target=/app/build" qa-automation-tests
+```
+
+The reports then appear at the paths listed below. Without a mount, they remain
+inside the container and are removed along with it. A failed test causes a
+non-zero container exit code.
+
+Tests run as the non-root `qa` user. The container's Chrome launcher adds
+`--no-sandbox` and `--disable-dev-shm-usage` to work with Docker's process and
+shared-memory constraints. The latter uses `/tmp` instead of `/dev/shm`, so the
+standard run command does not require a larger shared-memory allocation.
+The Chrome version in the Dockerfile must stay aligned with `ui.browserVersion`.
 
 ## Configuration
 
