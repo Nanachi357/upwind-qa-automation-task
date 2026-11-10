@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.ponomarenko'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.14.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation 'com.codeborne:selenide:7.19.1'
+    testImplementation 'io.rest-assured:rest-assured:6.3.0'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+
+    // Gradle and its test workers run in different JVMs.
+    systemProperties System.getProperties().findAll { key, value ->
+        key.startsWith('ui.') || key.startsWith('api.') || key.startsWith('sauce.')
+    }
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat = 'full'
+    }
+}
+
+tasks.named('test', Test) {
+    description = 'Runs all UI and API tests.'
+    include '**/*Test.class'
+}
+
+tasks.register('uiTest', Test) {
+    group = 'verification'
+    description = 'Runs tests from the ui package.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include '**/ui/**/*Test.class'
+}
+
+tasks.register('apiTest', Test) {
+    group = 'verification'
+    description = 'Runs tests from the api package.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include '**/api/**/*Test.class'
+}
