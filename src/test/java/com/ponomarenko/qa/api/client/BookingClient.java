@@ -22,6 +22,10 @@ public class BookingClient {
         return request().pathParam("id", bookingId).get("/booking/{id}");
     }
 
+    public Response deleteBooking(int bookingId) {
+        return request().pathParam("id", bookingId).delete("/booking/{id}");
+    }
+
     private RequestSpecification request() {
         Duration timeout = Duration.ofMillis(TestConfig.getPositiveLong("api.timeoutMs"));
         return given()

@@ -4,7 +4,7 @@ Practical assignment for the QA Automation Engineer position at Upwind.
 
 ## Coverage
 
-Three scenarios are implemented:
+Six scenarios are implemented:
 
 1. Log in with the provided credentials, check the Products page URL and heading,
    and verify that the page contains a visible product with a non-empty name.
@@ -12,7 +12,14 @@ Three scenarios are implemented:
    product to the cart, and verify its name and price in the cart.
 3. Create a Restful Booker booking, retrieve it by the returned ID, and verify
    the stored booking data through REST Assured. This scenario runs for both
-   `depositpaid=true` and `depositpaid=false`, giving four test cases in total.
+   `depositpaid=true` and `depositpaid=false`.
+4. Request the missing booking ID `0`, check HTTP 404 and the error response.
+5. Attempt to delete a newly created booking without authentication, check
+   HTTP 403, and verify that the same booking is still available.
+6. Submit an incorrect password, check the login error, and verify that the
+   browser remains on the login page with the form visible.
+
+There are seven test cases in total: three UI cases and four API cases.
 
 ## Stack
 
@@ -97,7 +104,7 @@ docker build -t qa-automation-tests .
 docker run --rm qa-automation-tests
 ```
 
-The default command runs all four test cases with headless Chrome. Building the
+The default command runs all seven test cases with headless Chrome. Building the
 image compiles the tests without executing them. Internet access to dependency
 repositories and the public test services is required for setup and execution.
 Keep `ui.headless=true` in this image, which has no display server.
@@ -127,6 +134,25 @@ Tests run as the non-root `qa` user. The container's Chrome launcher adds
 shared-memory constraints. The latter uses `/tmp` instead of `/dev/shm`, so the
 standard run command does not require a larger shared-memory allocation.
 The Chrome version in the Dockerfile must stay aligned with `ui.browserVersion`.
+
+## Continuous integration
+
+The workflow in `.github/workflows/tests.yml` builds the Docker image and runs
+the complete suite on pushes, pull requests and manual dispatches. It uses an
+Ubuntu 24.04 runner and the same Docker commands as local container execution.
+
+After the run, it collects HTML reports, JUnit XML, container logs and any
+Selenide screenshots/page sources, including when a test fails. The
+`qa-automation-reports` artifact is retained for seven days. Download it from
+the workflow run and open `reports/tests/test/index.html`. UI failure files
+are under `reports/selenide/`.
+
+The test step preserves Docker's exit code. Report collection, artifact upload
+and container cleanup run even after a failure. GitHub Actions used by the
+workflow are pinned to commit hashes, with release versions in comments.
+
+To execute the hosted workflow, push the repository to GitHub with Actions
+enabled. Its configuration and Docker execution can also be checked locally.
 
 ## Configuration
 
@@ -204,6 +230,12 @@ reading a response.
 - API assertion messages identify POST or GET and include the generated name or
   booking ID. GET field validations are grouped so one failure reports all
   mismatched fields together.
+- Negative API cases validate both status and error text. The unauthorized
+  DELETE targets only a booking created by that case and is followed by a GET
+  that checks its availability and unique first name. Missing-ID coverage uses
+  zero because Restful Booker allocates positive booking IDs.
+- The negative UI case checks the visible error and the login page URL/form
+  using the same condition-based waits as the positive scenarios.
 - Tests currently run sequentially.
 - SLF4J Simple provides Selenide logs, captured in the Gradle test reports.
   WebDriver BiDi is enabled for Selenide's browser-log collection.

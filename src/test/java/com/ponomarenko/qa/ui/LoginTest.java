@@ -16,4 +16,14 @@ class LoginTest extends BaseUiTest {
         productsPage.shouldBeOpen()
                 .shouldContainProducts();
     }
+
+    @Test
+    @DisplayName("An incorrect password shows an error and keeps the user on the login page")
+    void incorrectPasswordIsRejected() {
+        new LoginPage()
+                .open()
+                .submitCredentials(TestConfig.get("sauce.username"), TestConfig.get("sauce.password") + "_invalid")
+                .shouldShowError("Epic sadface: Username and password do not match any user in this service")
+                .shouldBeOpen();
+    }
 }
